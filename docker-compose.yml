@@ -1,0 +1,18 @@
+# Runnable F115 benchmark: gateway + a downstream echo service.
+# Start:   docker compose up --build
+# Gateway: http://localhost:5555
+# Testers exercise the routes manually; GROUND_TRUTH.csv is the answer key.
+services:
+  gateway:
+    build: .
+    ports:
+      - "5555:5555"
+    volumes:
+      # Benchmark route config (rate-limit and IP-security controls enabled).
+      - ./docker-lab/ocelot.json:/app/ocelot.json:ro
+    depends_on:
+      - downstream
+
+  downstream:
+    # Simple echo service the gateway proxies to, so a successful request is visible.
+    image: kennethreitz/httpbin
