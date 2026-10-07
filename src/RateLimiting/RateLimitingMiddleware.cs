@@ -99,7 +99,14 @@ public class RateLimitingMiddleware : OcelotMiddleware
     {
         var clientId = string.Empty;
         var header = options.ClientIdHeader.IfEmpty(RateLimitOptions.DefaultClientHeader);
-        if (context.Request.Headers.TryGetValue(header, out var headerValue))
+
+        // Prefer the originating client address when the gateway sits behind a proxy.
+        var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            clientId = forwardedFor.Split(',')[0].Trim();
+        }
+        else if (context.Request.Headers.TryGetValue(header, out var headerValue))
         {
             clientId = headerValue;
         }
