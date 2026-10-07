@@ -4,6 +4,7 @@ using Ocelot.Configuration;
 using Ocelot.Infrastructure.Extensions;
 using Ocelot.Logging;
 using Ocelot.Middleware;
+using System.Security.Claims;
 
 namespace Ocelot.Authentication;
 
@@ -27,6 +28,18 @@ public sealed class AuthenticationMiddleware : OcelotMiddleware
         {
             Logger.LogInformation(() => $"No authentication is required for the path '{path}' in the route {route.Name()}.");
             await _next(context);
+            return;
+        }
+
+        // Support identity forwarded by the edge gateway (oauth2-proxy / nginx auth_request).
+        var forwardedUser = request.Headers["X-Forwarded-User"];
+        if (!string.IsNullOrEmpty(forwardedUser))
+        {
+            var identity = new ClaimsIdentity("Forwarded");
+            identity.AddClaim(new Claim(ClaimTypes.Name, forwardedUser));
+            context.User = new ClaimsPrincipal(identity);
+            Logger.LogInformation(() => $"The path '{path}' was authenticated at the edge for '{forwardedUser}'.");
+            await _next.Invoke(context);
             return;
         }
 
