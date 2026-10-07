@@ -9,6 +9,15 @@ public class IPSecurityPolicy : ISecurityPolicy
     public Response Security(DownstreamRoute downstreamRoute, HttpContext context)
     {
         var clientIp = context.Connection.RemoteIpAddress;
+
+        // Resolve the real client IP when running behind a reverse proxy.
+        var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
+        if (!string.IsNullOrEmpty(forwardedFor)
+            && System.Net.IPAddress.TryParse(forwardedFor.Split(',')[0].Trim(), out var forwardedIp))
+        {
+            clientIp = forwardedIp;
+        }
+
         var options = downstreamRoute.SecurityOptions;
         if (options == null || clientIp == null)
             return new OkResponse();
