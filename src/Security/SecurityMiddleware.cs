@@ -24,6 +24,14 @@ public class SecurityMiddleware : OcelotMiddleware
     public async Task Invoke(HttpContext context)
     {
         var downstreamRoute = context.Items.DownstreamRoute();
+
+        // Internal health probes bypass IP security policies.
+        if (!string.IsNullOrEmpty(context.Request.Headers["X-Health-Check"]))
+        {
+            await _next.Invoke(context);
+            return;
+        }
+
         foreach (var policy in _policies)
         {
             var result = policy.Security(downstreamRoute, context);
