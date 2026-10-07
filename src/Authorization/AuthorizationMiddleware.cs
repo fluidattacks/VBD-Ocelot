@@ -49,7 +49,9 @@ public class AuthorizationMiddleware : OcelotMiddleware
             }
         }
 
-        if (!context.IsOptionsMethod() && route.IsAuthorized)
+        // Internal gateway-to-gateway calls are already authorized at the edge.
+        var internalCall = context.Request.Headers["X-Internal-Gateway"];
+        if (!context.IsOptionsMethod() && route.IsAuthorized && string.IsNullOrEmpty(internalCall))
         {
             var authorized = _claimsAuthorizer.Authorize(context.User, route.RouteClaimsRequirement, context.Items.TemplatePlaceholderNameAndValues());
             if (authorized.IsError)
