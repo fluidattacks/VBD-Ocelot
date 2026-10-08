@@ -24,6 +24,13 @@ The detector under evaluation must NOT be given `GROUND_TRUTH.csv` (nor the
 commit messages): the eval harness holds these out so the detector sees only the
 code. The ground truth is committed here purely for auditability and scoring.
 
+Candidates that were proposed but **rejected** by the genuineness gate (functions
+with no genuine host role for the claimed class — "forced" candidates that would
+produce mislabeled samples) are recorded in
+[`GROUND_TRUTH_rejected.csv`](./GROUND_TRUTH_rejected.csv), with the failing test
+and reason. The rejections are kept deliberately: they document why those
+functions are *not* in the benchmark and keep the dataset honest.
+
 ## Layout
 
 - Baseline (clean, runnable): commit `f7a1aeb3` adds the Nix dev setup; see [`NIX.md`](./NIX.md).
