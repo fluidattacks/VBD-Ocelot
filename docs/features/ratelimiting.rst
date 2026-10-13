@@ -107,6 +107,8 @@ You can configure the following options in the ``GlobalConfiguration`` section o
     - Specifies the header used to identify clients, with "Oc-Client" set as the default.
   * - ``ClientWhitelist``
     - An array that contains the clients exempt from *rate limiting*.
+  * - ``TrustedProxies``
+    - An array of proxy IP addresses allowed to assert the ``ClientIdHeader``. Loopback is always trusted; any other peer is identified by its connection address and its header is ignored.
   * - ``EnableRateLimiting``
     - Enables or disables rate limiting. Defaults to ``true`` (enabled).
   * - ``EnableHeaders``

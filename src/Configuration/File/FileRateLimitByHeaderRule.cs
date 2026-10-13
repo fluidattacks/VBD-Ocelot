@@ -19,6 +19,7 @@ public class FileRateLimitByHeaderRule : FileRateLimitRule
     {
         ClientIdHeader = from.ClientIdHeader;
         ClientWhitelist = from.ClientWhitelist;
+        TrustedProxies = from.TrustedProxies;
         DisableRateLimitHeaders = from.DisableRateLimitHeaders;
         HttpStatusCode = from.HttpStatusCode;
         QuotaExceededMessage = from.QuotaExceededMessage;
@@ -32,6 +33,8 @@ public class FileRateLimitByHeaderRule : FileRateLimitRule
     /// <summary>A list of approved clients aka whitelisted ones.</summary>
     /// <value>An <see cref="IList{T}"/> collection of allowed clients.</value>
     public IList<string> ClientWhitelist { get; set; }
+
+    public IList<string> TrustedProxies { get; set; }
 
     /// <summary>
     /// Returns a string that represents the current rule in the format, which defaults to empty string if rate limiting is disabled (<see cref="FileRateLimitRule.EnableRateLimiting"/> is <see langword="false"/>).

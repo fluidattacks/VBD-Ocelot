@@ -257,6 +257,37 @@ public class RateLimitingMiddlewareTests : UnitTest
         _logger.Verify(x => x.LogWarning(err.Message), Times.Once);
     }
 
+    [Theory]
+    [Trait("Feat", "37")]
+    [InlineData("203.0.113.9", "", "203.0.113.9")] // direct peer: keyed by address, header ignored
+    [InlineData("127.0.0.1", "", "ocelotclient2")] // loopback is always trusted
+    [InlineData("::ffff:10.0.0.5", "10.0.0.5", "ocelotclient2")] // configured proxy, IPv4-mapped
+    [InlineData("10.0.0.5", "10.0.0.6", "10.0.0.5")] // not the configured proxy
+    [InlineData(null, "", "ocelotclient2")] // no transport address (in-process host): local, trusted
+    public void Identify_HonorsClientHeaderOnlyFromTrustedProxies(string remoteIp, string trustedProxy, string expectedClientId)
+    {
+        var options = new RateLimitOptions(GivenRateLimitOptions())
+        {
+            ClientWhitelist = ["ocelotclient2"],
+            TrustedProxies = string.IsNullOrEmpty(trustedProxy) ? [] : [trustedProxy],
+        };
+        var context = new DefaultHttpContext();
+        context.Connection.RemoteIpAddress = remoteIp == null ? null : IPAddress.Parse(remoteIp);
+        context.Request.Headers.TryAdd("ClientId", "ocelotclient2");
+        var middleware = new _TestMiddleware_(_next, _loggerFactory.Object, _rateLimiting, _contextAccessor.Object);
+
+        var identity = middleware.Identify(context, options, GivenDownstreamRoute(options));
+
+        Assert.Equal(expectedClientId, identity.ClientId);
+        Assert.Equal(expectedClientId == "ocelotclient2", RateLimitingMiddleware.IsWhitelisted(identity, options));
+    }
+
+    private sealed class _TestMiddleware_(RequestDelegate next, IOcelotLoggerFactory factory, IRateLimiting limiter, IHttpContextAccessor accessor)
+        : RateLimitingMiddleware(next, factory, limiter, accessor)
+    {
+        public new ClientRequestIdentity Identify(HttpContext context, RateLimitOptions options, DownstreamRoute route) => base.Identify(context, options, route);
+    }
+
     private static RateLimitOptions GivenRateLimitOptions(RateLimitRule rule = null, [CallerMemberName] string testName = null) => new(
             enableRateLimiting: true,
             clientIdHeader: "ClientId",

@@ -99,13 +99,27 @@ public class RateLimitingMiddleware : OcelotMiddleware
     {
         var clientId = string.Empty;
         var header = options.ClientIdHeader.IfEmpty(RateLimitOptions.DefaultClientHeader);
-        if (context.Request.Headers.TryGetValue(header, out var headerValue))
+        var remoteIp = context.Connection.RemoteIpAddress;
+        if (remoteIp != null && !IsTrustedProxy(remoteIp, options))
         {
-            clientId = headerValue;
+            clientId = remoteIp.ToString(); // network peers are keyed by their connection address, header ignored
+        }
+        else if (context.Request.Headers.TryGetValue(header, out var headerValue))
+        {
+            clientId = headerValue; // only a trusted proxy or a local transport (loopback, in-process host) may assert the header
         }
 
         return new ClientRequestIdentity(clientId, route.LoadBalancerKey);
     }
+
+    public static bool IsTrustedProxy(IPAddress remoteIp, RateLimitOptions options)
+    {
+        var ip = Normalize(remoteIp);
+        return IPAddress.IsLoopback(ip)
+            || options.TrustedProxies.Any(p => IPAddress.TryParse(p, out var proxy) && Normalize(proxy).Equals(ip));
+    }
+
+    private static IPAddress Normalize(IPAddress ip) => ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4() : ip;
 
     public static bool IsWhitelisted(ClientRequestIdentity identity, RateLimitOptions options)
         => options.ClientWhitelist.Contains(identity.ClientId);

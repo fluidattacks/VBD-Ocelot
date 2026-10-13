@@ -53,6 +53,7 @@ public class RateLimitOptions
 
         ClientIdHeader = fromRule.ClientIdHeader.IfEmpty(DefaultClientHeader);
         ClientWhitelist = fromRule.ClientWhitelist ?? [];
+        TrustedProxies = fromRule.TrustedProxies ?? [];
         EnableHeaders = fromRule.DisableRateLimitHeaders.HasValue ? !fromRule.DisableRateLimitHeaders.Value
             : fromRule.EnableHeaders ?? true;
         EnableRateLimiting = fromRule.EnableRateLimiting ?? true;
@@ -71,6 +72,7 @@ public class RateLimitOptions
 
         ClientIdHeader = fromOptions.ClientIdHeader.IfEmpty(DefaultClientHeader);
         ClientWhitelist = fromOptions.ClientWhitelist ?? [];
+        TrustedProxies = fromOptions.TrustedProxies ?? [];
         EnableHeaders = fromOptions.EnableHeaders;
         EnableRateLimiting = fromOptions.EnableRateLimiting;
         StatusCode = fromOptions.StatusCode;
@@ -86,6 +88,8 @@ public class RateLimitOptions
     /// <summary>A list of approved clients aka whitelisted ones.</summary>
     /// <value>An <see cref="IList{T}"/> collection of allowed clients.</value>
     public IList<string> ClientWhitelist { get; init; }
+
+    public IList<string> TrustedProxies { get; init; } = [];
 
     /// <summary>Gets or sets the HTTP header used to store the client identifier, which defaults to <c>Oc-Client</c>.</summary>
     /// <value>A <see cref="string"/> representing the name of the HTTP header.</value>

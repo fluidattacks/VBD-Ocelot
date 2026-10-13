@@ -60,6 +60,8 @@ public class RateLimitOptionsCreator : IRateLimitOptionsCreator
             rule.ClientWhitelist = globalRule.ClientWhitelist ?? [];
         }
 
+        rule.TrustedProxies ??= globalRule.TrustedProxies ?? [];
+
         // Final merging of EnableHeaders is implemented in the constructor
         rule.DisableRateLimitHeaders ??= globalRule.DisableRateLimitHeaders;
         rule.EnableHeaders ??= globalRule.EnableHeaders;
