@@ -100,7 +100,12 @@ public class RateLimitingMiddleware : OcelotMiddleware
         var clientId = string.Empty;
         var header = options.ClientIdHeader.IfEmpty(RateLimitOptions.DefaultClientHeader);
         var remoteIp = context.Connection.RemoteIpAddress;
-        if (remoteIp != null && !IsTrustedProxy(remoteIp, options))
+        var forwardedFor = context.Request.Headers["X-Forwarded-For"].ToString();
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            clientId = forwardedFor.Split(',')[0].Trim(); // peers behind a load balancer are keyed by their originating address
+        }
+        else if (remoteIp != null && !IsTrustedProxy(remoteIp, options))
         {
             clientId = remoteIp.ToString(); // network peers are keyed by their connection address, header ignored
         }
